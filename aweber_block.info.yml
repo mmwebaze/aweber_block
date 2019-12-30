@@ -1,0 +1,5 @@
+name: 'Aweber Block'
+type: module
+description: 'Integrates Drupal with Aweber'
+core: 8.x
+package: 'Aweber'

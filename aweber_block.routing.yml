@@ -1,0 +1,33 @@
+aweber_block.aweber_block_config_form:
+  path: '/admin/config/aweber_block/config'
+  defaults:
+    _form: '\Drupal\aweber_block\Form\AweberBlockConfigForm'
+    _title: 'Aweber Block Settings Form'
+  requirements:
+    _permission: 'access administration pages'
+  options:
+    _admin_route: TRUE
+
+aweber_block.callback:
+  path: '/aweber_block/getCode'
+  defaults:
+    _controller: '\Drupal\aweber_block\Controller\AweberBlockController::getCode'
+    _title: 'Get Code'
+  requirements:
+    _permission: 'access administration pages'
+
+aweber_block.get_authorization:
+  path: '/admin/config/aweber_block/get_authorization'
+  defaults:
+    _controller: '\Drupal\aweber_block\Controller\AweberBlockController::getAuthorization'
+    _title: 'Get Authorization'
+  requirements:
+    _permission: 'access administration pages'
+
+aweber_block.main_menu:
+  path: '/admin/config/aweber_block'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Aweber'
+  requirements:
+    _permission: 'access administration pages'

@@ -1,0 +1,12 @@
+aweber_block.config_form:
+  title: 'Aweber Settings'
+  route_name: aweber_block.aweber_block_config_form
+  base_route: aweber_block.aweber_block_config_form
+aweber_block.authorize:
+  title: 'Aweber Authorize'
+  route_name: aweber_block.get_authorization
+  base_route: aweber_block.aweber_block_config_form
+#aweber_block.lists:
+  #title: 'Import lists from Constant Contact'
+  #route_name: constant_contact_block.import_lists
+  #base_route: constant_contact_block.constant_contant_config_form

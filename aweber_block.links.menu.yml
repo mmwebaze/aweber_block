@@ -1,0 +1,19 @@
+aweber_block.main_menu:
+  title: 'Aweber**'
+  description: 'Manage Aweber.'
+  route_name: 'aweber_block.main_menu'
+  weight: 99
+  parent: 'system.admin_config'
+
+aweber_block.authorize_app:
+  title: 'Authorize site on Aweber'
+  route_name: aweber_block.get_authorization
+  description: 'Authorize App'
+  weight: 99
+  parent: 'aweber_block.main_menu'
+aweber_block.config_form:
+  title: 'Aweber Settings'
+  route_name: aweber_block.aweber_block_config_form
+  description: 'Aweber settings'
+  parent: 'aweber_block.main_menu'
+  weight: 99

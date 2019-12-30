@@ -1,0 +1,8 @@
+services:
+  aweber_block.authentication:
+    class: \Drupal\aweber_block\Service\AweberAuthentication
+    arguments: ['@config.factory', '@http_client']
+
+  aweber_block.manager:
+    class: \Drupal\aweber_block\Service\AweberManager
+    arguments: ['@aweber_block.authentication']
