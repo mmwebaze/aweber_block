@@ -3,9 +3,12 @@
 namespace Drupal\aweber_block\Form;
 
 use Drupal\aweber_block\Service\AweberServiceInterface;
+use Drupal\Core\Url;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Config\ImmutableConfig;
+
 
 class AweberForm extends FormBase {
   /**
@@ -22,12 +25,34 @@ class AweberForm extends FormBase {
    */
   protected $aweberService;
 
+  /**
+   * The list registration redirect params.
+   *
+   * @var array
+   */
+  protected $redirectParams;
+
+  /**
+   * Array of registration lists and other fields such as first name e.tc.
+   *
+   * @var array
+   */
   private $fields = [];
 
-  public function __construct(array $fields, MessengerInterface $messenger, AweberServiceInterface $aweberService) {
+  /**
+   * AweberForm constructor.
+   *
+   * @param array $fields
+   * @param ImmutableConfig $aweberConfig
+   * @param MessengerInterface $messenger
+   * @param AweberServiceInterface $aweberService
+   */
+  public function __construct(array $fields, ImmutableConfig $aweberConfig, MessengerInterface $messenger, AweberServiceInterface $aweberService) {
     $this->fields = $fields;
     $this->messenger = $messenger;
     $this->aweberService = $aweberService;
+    $this->redirectParams['enable_redirect'] = $aweberConfig->get('enable_redirect');
+    $this->redirectParams['redirect_link'] = $aweberConfig->get('redirect_link');
   }
   /**
    * {@inheritdoc}
@@ -79,7 +104,13 @@ class AweberForm extends FormBase {
         $params['email'] = $email;
         $isSubscribed = $this->aweberService->checkSubscriberExistsByEmail($email, $selectedList);
         if ($isSubscribed){
+
           $result = $this->aweberService->addSubscribers($selectedList, $params);
+
+          if ($this->redirectParams['enable_redirect']){
+            $url = Url::fromUri($this->redirectParams['redirect_link']);
+            $form_state->setRedirectUrl($url);
+          }
         }
       }
     }

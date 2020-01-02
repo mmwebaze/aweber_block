@@ -5,6 +5,7 @@ namespace Drupal\aweber_block\Service;
 
 use Drupal\aweber_block\AweberScopes;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Component\Datetime\TimeInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -33,9 +34,17 @@ class AweberAuthentication implements AweberAuthenticationInterface {
    */
   protected $scopes;
 
-  public function __construct(ConfigFactoryInterface $configFactory, ClientInterface $client) {
+  /**
+   * The Time Service.
+   *
+   * @var TimeInterface
+   */
+  protected $time;
+
+  public function __construct(ConfigFactoryInterface $configFactory, ClientInterface $client, TimeInterface $time) {
     $this->client = $client;
     $this->configFactory = $configFactory;
+    $this->time = $time;
   }
 
   public function buildAuthorizationUrl() {
@@ -96,16 +105,36 @@ class AweberAuthentication implements AweberAuthenticationInterface {
    * {@inheritdoc}
    */
   public function refreshAccessToken() {
+    $config = $this->configFactory->get('aweber_block.aweberblockconfig');
+    $clientId = $config->get('client_id');
+    $clientSecret = $config->get('client_secret');
+    $refreshToken = $config->get('refresh_token');
 
+    $url = "https://auth.aweber.com/oauth2/token";
+    try {
+      $response = $this->client->request('POST', $url, [
+        'auth' => [$clientId, $clientSecret],
+        'query' => [
+          'grant_type' => 'refresh_token',
+          'refresh_token' => $refreshToken,
+        ]
+      ]);
+
+      return json_decode((string) $response->getBody());
+    } catch (GuzzleException $e) {
+      \Drupal::logger('aweber_block')->notice($e->getMessage());
+      return null;
+    }
   }
   /**
    * {@inheritdoc}
    */
   public function saveAccessToken($tokenObject) {
-    //@todo save refresh token, expire-in value and account value.
     if ($tokenObject) {
       $config = $this->configFactory->getEditable('aweber_block.aweberblockconfig');
-      $config->set('auth_token', $tokenObject->access_token)->save();
+      $config->set('auth_token', $tokenObject->access_token)
+        ->set('refresh_token', $tokenObject->refresh_token)
+        ->set('expires_in', $tokenObject->expires_in + $this->time->getCurrentTime())->save();
     }
   }
   /**
@@ -113,6 +142,15 @@ class AweberAuthentication implements AweberAuthenticationInterface {
    */
   public function getStoredAccessToken() {
     //@todo probably want to check if token is still valid. if invalid, refresh token return refreshed token and save it as well.
+    $timestamp = $this->time->getCurrentTime();
+    $expiresIn = $this->configFactory->get('aweber_block.aweberblockconfig')->get('expires_in');
+
+    //Refresh token
+    if ($timestamp > $expiresIn) {
+      $tokenObject = $this->refreshAccessToken();
+      $this->saveAccessToken($tokenObject);
+      return $tokenObject->access_token;
+    }
 
     return $this->configFactory->get('aweber_block.aweberblockconfig')->get('auth_token');
   }

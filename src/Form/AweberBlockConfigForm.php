@@ -31,8 +31,11 @@ class AweberBlockConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    global $base_root;
     $config = $this->config('aweber_block.aweberblockconfig');
     $redirectUri = $config->get('redirect_uri');
+    $enable_redirect = $config->get('enable_redirect');
+    $redirect_ink = $config->get('redirect_registration');
 
     $form['aweber'] = [
       '#type' => 'fieldset',
@@ -85,6 +88,23 @@ class AweberBlockConfigForm extends ConfigFormBase {
       '#description' => $this->t('The list of scopes to allow for the customer\'s account'),
       '#required' => TRUE,
     );
+    $form['aweber_block_redirect'] = array(
+      '#type' => 'details',
+      '#open' => FALSE,
+      '#title' => t('Redirect Settings.'),
+      '#tree' => TRUE,
+    );
+    $form['aweber_block_redirect']['enable_redirect']= array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable redirect on registration'),
+      '#default_value' => isset($enable_redirect) ? $enable_redirect : FALSE,
+    );
+    $form['aweber_block_redirect']['redirect_link'] = [
+      '#type' => 'url',
+      '#title' => t('Page user is redirected to after registration.'),
+      '#default_value' => isset($redirect_ink) ? $redirect_ink : $base_root.'/aweber_block/thankyou',
+      '#description' => $this->t('Only internal drupal pages are supported.')
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -103,6 +123,8 @@ class AweberBlockConfigForm extends ConfigFormBase {
       ->set('auth_request_url', $form_state->getValue('auth_request_url'))
       ->set('auth_token', $form_state->getValue('auth_token'))
       ->set('scopes', $form_state->getValue('scopes'))
+      ->set('enable_redirect', $form_state->getValue('aweber_block_redirect')['enable_redirect'])
+      ->set('redirect_link', $form_state->getValue('aweber_block_redirect')['redirect_link'])
       ->save();
   }
 }

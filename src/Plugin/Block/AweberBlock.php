@@ -6,6 +6,7 @@ use Drupal\aweber_block\Form\AweberForm;
 use Drupal\aweber_block\Service\AweberServiceInterface;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormBuilder;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\Messenger;
@@ -57,16 +58,38 @@ class AweberBlock extends BlockBase implements ContainerFactoryPluginInterface {
    * @var array
    */
   protected $accounts;
+
+  /**
+   * The aweber account ID.
+   *
+   * @var int
+   */
   protected $accoundId;
+
+  /**
+   * The list registration redirect params.
+   *
+   * @var array
+   */
+  protected $redirectParams;
+  /**
+   * The aweber_block config object.
+   *
+   * @var ImmutableConfig
+   */
+  protected $aweberConfig;
 
   public function __construct(array $configuration, $plugin_id, $plugin_definition, AweberServiceInterface $aweberService,
                               FormBuilder $formBuilderService, ConfigFactoryInterface $configFactory) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    //$this->configFactory =
+    $this->aweberConfig = $configFactory->get('aweber_block.aweberblockconfig');
     $this->aweberService = $aweberService;
     $this->formBuilderService = $formBuilderService;
     //$this->messenger = $messenger;
     $this->accounts = $this->aweberService->accounts();
+
+    /*$this->redirectParams['enable_redirect'] = $configFactory->get('aweber_block.aweberblockconfig')->get('enable_redirect');
+    $this->redirectParams['redirect_link'] = $configFactory->get('aweber_block.aweberblockconfig')->get('redirect_link');*/
 
     if (!empty($this->accounts)){
       $this->accoundId = $this->accounts[0]['id'];
@@ -114,11 +137,12 @@ class AweberBlock extends BlockBase implements ContainerFactoryPluginInterface {
   public function build() {
     $config = $this->getConfiguration();
     $emailLists = $config['aweber_block_email_lists'];
-    $aweberForm = new AweberForm($emailLists, $this->messenger(), $this->aweberService);
+    $aweberForm = new AweberForm($emailLists, $this->aweberConfig, $this->messenger(), $this->aweberService);
     $form = $this->formBuilderService->getForm($aweberForm);
 
     return $form;
   }
+
   /**
    * {@inheritdoc}
    */

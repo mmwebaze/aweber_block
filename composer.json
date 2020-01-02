@@ -1,9 +1,12 @@
 {
     "name": "aweber_block",
     "type": "drupal-module",
-    "description": "My Awesome Module",
-    "keywords": [
-    ],
+    "description": "Integrates Drupal 8 with Aweber integration.",
+    "authors": [{
+        "name": "Michael Mwebaze",
+        "homepage": "https://www.drupal.org/user/3201071"
+    }],
+    "keywords": ["drupal", "Aweber Block", "integration", "Aweber"],
     "homepage": "https://www.drupal.org/project/aweber_block",
     "minimum-stability": "dev",
     "support": {

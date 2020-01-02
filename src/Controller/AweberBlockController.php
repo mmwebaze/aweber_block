@@ -11,12 +11,21 @@ use Symfony\Component\HttpFoundation\Request;
  * Class AweberBlockController.
  */
 class AweberBlockController extends ControllerBase {
+
+  /**
+   * The Authenthocation service.
+   *
+   * @var AweberAuthenticationInterface
+   */
   protected $authenticationService;
 
   public function __construct(AweberAuthenticationInterface $authenticationService) {
     $this->authenticationService = $authenticationService;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('aweber_block.authentication')
@@ -25,6 +34,15 @@ class AweberBlockController extends ControllerBase {
     );
   }
 
+  /**
+   * The callback route.
+   *
+   * @param Request $request
+   *   The request object.
+   *
+   * @return array
+   *   The render array or response.
+   */
   public function getCode(Request $request) {
     $message = 'Access hasn\'t been granted';
 
@@ -36,9 +54,9 @@ class AweberBlockController extends ControllerBase {
 
       if ($accessTokenResponse){
         $this->authenticationService->saveAccessToken($accessTokenResponse);
-        print_r($accessTokenResponse);
+
         $message = 'Access has been granted.';
-        print_r($message);die;
+        //redirect to config page
       }
     }
     return array(
@@ -64,5 +82,15 @@ class AweberBlockController extends ControllerBase {
       '#type' => 'markup',
       '#markup' => '<a href=' . $url . ' target="_blank">Click to connect to Aweber to authorize App</a>',
     ];
+  }
+
+  /**
+   * @return array
+   */
+  public function index(){
+
+    return array(
+      '#theme' => 'aweber_block',
+    );
   }
 }

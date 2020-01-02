@@ -31,3 +31,11 @@ aweber_block.main_menu:
     _title: 'Aweber'
   requirements:
     _permission: 'access administration pages'
+
+aweber_block_redirect.default:
+  path: '/aweber_block/thankyou'
+  defaults:
+    _controller: '\Drupal\aweber_block\Controller\AweberBlockController::index'
+    _title: 'Thank you'
+  requirements:
+    _permission: 'access content'

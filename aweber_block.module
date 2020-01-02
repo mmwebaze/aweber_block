@@ -16,7 +16,7 @@ function aweber_block_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.aweber_block':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('My Awesome Module') . '</p>';
+      $output .= '<p>' . t('Integrates Drupal 8 with The Aweber Platform.') . '</p>';
       return $output;
 
     default:
@@ -29,7 +29,7 @@ function aweber_block_help($route_name, RouteMatchInterface $route_match) {
 function aweber_block_theme() {
   return [
     'aweber_block' => [
-      'render element' => 'children',
+      'variables' => ['variable' => NULL],
     ],
   ];
 }
