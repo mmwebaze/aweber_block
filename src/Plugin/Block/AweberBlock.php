@@ -4,6 +4,7 @@ namespace Drupal\aweber_block\Plugin\Block;
 
 use Drupal\aweber_block\Form\AweberForm;
 use Drupal\aweber_block\Service\AweberServiceInterface;
+use Drupal\aweber_block\SubscriberFieldPluginManager;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
@@ -79,17 +80,20 @@ class AweberBlock extends BlockBase implements ContainerFactoryPluginInterface {
    */
   protected $aweberConfig;
 
+  /**
+   * @var SubscriberFieldPluginManager
+   */
+  protected $subscriberFieldPluginManager;
+
   public function __construct(array $configuration, $plugin_id, $plugin_definition, AweberServiceInterface $aweberService,
-                              FormBuilder $formBuilderService, ConfigFactoryInterface $configFactory) {
+                              FormBuilder $formBuilderService, ConfigFactoryInterface $configFactory, SubscriberFieldPluginManager $subscriber_field_plugin_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->aweberConfig = $configFactory->get('aweber_block.aweberblockconfig');
+    $this->subscriberFieldPluginManager = $subscriber_field_plugin_manager;
     $this->aweberService = $aweberService;
     $this->formBuilderService = $formBuilderService;
     //$this->messenger = $messenger;
     $this->accounts = $this->aweberService->accounts();
-
-    /*$this->redirectParams['enable_redirect'] = $configFactory->get('aweber_block.aweberblockconfig')->get('enable_redirect');
-    $this->redirectParams['redirect_link'] = $configFactory->get('aweber_block.aweberblockconfig')->get('redirect_link');*/
 
     if (!empty($this->accounts)){
       $this->accoundId = $this->accounts[0]['id'];
@@ -106,7 +110,8 @@ class AweberBlock extends BlockBase implements ContainerFactoryPluginInterface {
     return new static($configuration, $plugin_id, $plugin_definition,
       $container->get('aweber_block.manager'),
       $container->get('form_builder'),
-      $container->get('config.factory')
+      $container->get('config.factory'),
+      $container->get('plugin.manager.aweber_block.subscriber_fields')
     );
   }
   /**
@@ -137,7 +142,7 @@ class AweberBlock extends BlockBase implements ContainerFactoryPluginInterface {
   public function build() {
     $config = $this->getConfiguration();
     $emailLists = $config['aweber_block_email_lists'];
-    $aweberForm = new AweberForm($emailLists, $this->aweberConfig, $this->messenger(), $this->aweberService);
+    $aweberForm = new AweberForm($emailLists, $this->aweberConfig, $this->messenger(), $this->aweberService, $this->subscriberFieldPluginManager);
     $form = $this->formBuilderService->getForm($aweberForm);
 
     return $form;

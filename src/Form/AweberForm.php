@@ -3,6 +3,7 @@
 namespace Drupal\aweber_block\Form;
 
 use Drupal\aweber_block\Service\AweberServiceInterface;
+use Drupal\aweber_block\SubscriberFieldPluginManager;
 use Drupal\Core\Url;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -37,22 +38,32 @@ class AweberForm extends FormBase {
    *
    * @var array
    */
-  private $fields = [];
+  protected $lists;
+  protected $subscriberFields;
 
   /**
    * AweberForm constructor.
    *
-   * @param array $fields
+   * @param array $lists
+   *   Email lists
    * @param ImmutableConfig $aweberConfig
    * @param MessengerInterface $messenger
    * @param AweberServiceInterface $aweberService
    */
-  public function __construct(array $fields, ImmutableConfig $aweberConfig, MessengerInterface $messenger, AweberServiceInterface $aweberService) {
-    $this->fields = $fields;
+
+  /**
+   * @var SubscriberFieldPluginManager
+   */
+  protected $subscriberFieldPluginManager;
+
+  public function __construct(array $lists, ImmutableConfig $aweberConfig, MessengerInterface $messenger, AweberServiceInterface $aweberService, SubscriberFieldPluginManager $subscriber_field_plugin_manager) {
+    $this->lists = $lists;
     $this->messenger = $messenger;
     $this->aweberService = $aweberService;
+    $this->subscriberFields = $aweberConfig->get('fields');
     $this->redirectParams['enable_redirect'] = $aweberConfig->get('enable_redirect');
     $this->redirectParams['redirect_link'] = $aweberConfig->get('redirect_link');
+    $this->subscriberFieldPluginManager = $subscriber_field_plugin_manager;
   }
   /**
    * {@inheritdoc}
@@ -63,6 +74,7 @@ class AweberForm extends FormBase {
 
   /**
    * {@inheritdoc}
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function buildForm(array $form, FormStateInterface $form_state, $parameter = NULL) {
 
@@ -71,11 +83,25 @@ class AweberForm extends FormBase {
       '#title' => $this->t('Email:'),
       '#required' => TRUE,
     ];
+
+    foreach ($this->subscriberFields as $subscriberField){
+      if ($subscriberField){
+        try{
+          $instance = $this->subscriberFieldPluginManager->createInstance($subscriberField);
+          $form[$subscriberField] = $instance->field();
+        }
+        catch (PluginException $pe){
+          //@todo replace by using DI.
+          \Drupal::logger('aweber_block')->error($pe->getMessage());
+        }
+      }
+    }
+
     $form['email_lists'] = [
       '#type' => 'checkboxes',
       '#multiple' => TRUE,
       '#title' => t('Email Lists:'),
-      '#options' => $this->fields,
+      '#options' => $this->lists,
       '#required' => TRUE,
     ];
     $form['actions']['#type'] = 'actions';
@@ -98,6 +124,12 @@ class AweberForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $email = $form_state->getValue('email');
     $selectedLists = $form_state->getValue('email_lists');
+
+    foreach ($this->subscriberFields as $subscriberField){
+      if ($subscriberField){
+        $params[$subscriberField] = $form_state->getValue($subscriberField);
+      }
+    }
 
     foreach ($selectedLists as $selectedList => $value) {
       if ($value != 0) {

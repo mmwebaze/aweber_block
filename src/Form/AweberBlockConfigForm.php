@@ -2,14 +2,37 @@
 
 namespace Drupal\aweber_block\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\aweber_block\AweberScopes;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\aweber_block\SubscriberFieldPluginManager;
 
 /**
  * Class AweberBlockConfigForm.
  */
 class AweberBlockConfigForm extends ConfigFormBase {
+
+  /**
+   * @var SubscriberFieldPluginManager
+   */
+  protected $subscriberFieldPluginManager;
+
+  public function __construct(ConfigFactoryInterface $config_factory, SubscriberFieldPluginManager $subscriber_field_plugin_manager) {
+    parent::__construct($config_factory);
+    $this->subscriberFieldPluginManager = $subscriber_field_plugin_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('plugin.manager.aweber_block.subscriber_fields')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -36,6 +59,12 @@ class AweberBlockConfigForm extends ConfigFormBase {
     $redirectUri = $config->get('redirect_uri');
     $enable_redirect = $config->get('enable_redirect');
     $redirect_ink = $config->get('redirect_registration');
+
+    $fieldDefinitions = $this->subscriberFieldPluginManager->getDefinitions();
+    $fields = array();
+    foreach ($fieldDefinitions as $field => $fieldDefinition){
+      $fields[$field] = $fieldDefinition['id'];
+    }
 
     $form['aweber'] = [
       '#type' => 'fieldset',
@@ -88,6 +117,21 @@ class AweberBlockConfigForm extends ConfigFormBase {
       '#description' => $this->t('The list of scopes to allow for the customer\'s account'),
       '#required' => TRUE,
     );
+    $form['aweber_block_fields'] = array(
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => t('Fields.'),
+      '#tree' => TRUE,
+    );
+
+    $form['aweber_block_fields']['fields']= array(
+      '#type' => 'checkboxes',
+      '#options' => $fields,
+      '#title' => $this->t('Subscriber Fields'),
+      '#default_value' => $config->get('fields'),
+      '#description' => $this->t('List of optional subscriber fields to add to registration form.')
+    );
+
     $form['aweber_block_redirect'] = array(
       '#type' => 'details',
       '#open' => FALSE,
@@ -123,6 +167,7 @@ class AweberBlockConfigForm extends ConfigFormBase {
       ->set('auth_request_url', $form_state->getValue('auth_request_url'))
       ->set('auth_token', $form_state->getValue('auth_token'))
       ->set('scopes', $form_state->getValue('scopes'))
+      ->set('fields', $form_state->getValue('aweber_block_fields')['fields'])
       ->set('enable_redirect', $form_state->getValue('aweber_block_redirect')['enable_redirect'])
       ->set('redirect_link', $form_state->getValue('aweber_block_redirect')['redirect_link'])
       ->save();

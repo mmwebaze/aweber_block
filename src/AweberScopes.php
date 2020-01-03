@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\aweber_block;
 
 

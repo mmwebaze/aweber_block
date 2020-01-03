@@ -6,3 +6,7 @@ services:
   aweber_block.manager:
     class: \Drupal\aweber_block\Service\AweberManager
     arguments: ['@aweber_block.authentication']
+
+  plugin.manager.aweber_block.subscriber_fields:
+    class: Drupal\aweber_block\SubscriberFieldPluginManager
+    parent: default_plugin_manager
